@@ -43,7 +43,7 @@ pub fn async_middleware(item: TokenStream) -> TokenStream {
 
         MiddlewareChain {
             chain,
-            assigned: false
+            assigned: true
         }
     }};
 

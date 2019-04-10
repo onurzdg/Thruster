@@ -107,6 +107,7 @@ impl<T: 'static> MiddlewareChain<T> {
   ///
   pub fn chain(&mut self, mut chain: MiddlewareChain<T>) {
     self.chain.nodes.append(&mut chain.chain.nodes);
+    self.assigned = self.assigned || chain.is_assigned();
   }
 
   ///

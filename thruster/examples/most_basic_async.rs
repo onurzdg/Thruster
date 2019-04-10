@@ -11,6 +11,22 @@ use thruster::server::Server;
 use thruster::ThrusterServer;
 use thruster::thruster_proc::{async_middleware, middleware_fn};
 
+
+#[middleware_fn]
+async fn profiling(mut context: Ctx, next: Box<(Fn(Ctx) -> Pin<Box<Future<Output=Ctx> + Send + Sync>>) + 'static + Send + Sync>) -> Ctx {
+  println!("[start] {} -- {}",
+    context.request.method(),
+    context.request.path());
+
+  context = await!(next(context));
+
+  println!("[end] {} -- {}",
+    context.request.method(),
+    context.request.path());
+
+  context
+}
+
 #[middleware_fn]
 async fn add_one(context: Ctx, next: Box<(Fn(Ctx) -> Pin<Box<Future<Output=Ctx> + Send + Sync>>) + 'static + Send + Sync>) -> Ctx {
   let mut ctx: Ctx = await!(next(context));
@@ -38,8 +54,14 @@ fn main() {
 
   let mut app = App::<Request, Ctx>::new_basic();
 
+  app.use_middleware("/", async_middleware!(Ctx, [profiling]));
+  // for (route, middleware) in app._route_parser.route_tree.root_node.enumerate() {
+  //   println!("a{}: {}", route, middleware.chain.nodes.len());
+  // }
+
   app.get("/plaintext", async_middleware!(Ctx, [add_one, plaintext]));
-  app.set404(async_middleware!(Ctx, [four_oh_four]));
+
+  // app.set404(async_middleware!(Ctx, [four_oh_four]));
 
   let server = Server::new(app);
   server.start("0.0.0.0", 4321);
